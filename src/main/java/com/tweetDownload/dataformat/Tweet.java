@@ -9,26 +9,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Tweet {
 
-	@JsonProperty("topic")
-	private String topic;
-
 	@JsonProperty("tweet_text")
 	private String tweet_text;
 
 	@JsonProperty("tweet_lang")
 	private String tweet_lang;
-
-	@JsonProperty("text_en")
-	private String text_en;
-
-	@JsonProperty("text_ko")
-	private String text_ko;
-
-	@JsonProperty("text_es")
-	private String text_es;
-
-	@JsonProperty("text_tr")
-	private String text_tr;
 
 	@JsonProperty("hashtags")
 	private List<String> hashtags;
@@ -39,9 +24,6 @@ public class Tweet {
 	@JsonProperty("tweet_urls")
 	private List<String> tweet_urls;
 
-	@JsonProperty("tweet_emoticons")
-	private List<String> tweet_emoticons;
-
 	@JsonProperty("tweet_date")
 	private String tweet_date;
 
@@ -50,6 +32,17 @@ public class Tweet {
 	
 	@JsonProperty("isRetweet")
 	private boolean isRetweet;
+	
+	@JsonProperty("user")
+	private User user;
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
 
 	public boolean isRetweet() {
 		return isRetweet;
@@ -57,14 +50,6 @@ public class Tweet {
 
 	public void setRetweet(boolean isRetweet) {
 		this.isRetweet = isRetweet;
-	}
-
-	public String getTopic() {
-		return topic;
-	}
-
-	public void setTopic(String topic) {
-		this.topic = topic;
 	}
 
 	public String getTweet_text() {
@@ -83,37 +68,6 @@ public class Tweet {
 		this.tweet_lang = tweet_lang;
 	}
 
-	public String getText_en() {
-		return text_en;
-	}
-
-	public void setText_en(String text_en) {
-		this.text_en = text_en;
-	}
-
-	public String getText_ko() {
-		return text_ko;
-	}
-
-	public void setText_ko(String text_ko) {
-		this.text_ko = text_ko;
-	}
-
-	public String getText_es() {
-		return text_es;
-	}
-
-	public void setText_es(String text_es) {
-		this.text_es = text_es;
-	}
-
-	public String getText_tr() {
-		return text_tr;
-	}
-
-	public void setText_tr(String text_tr) {
-		this.text_tr = text_tr;
-	}
 
 	public List<String> getHashtags() {
 		return hashtags;
@@ -137,14 +91,6 @@ public class Tweet {
 
 	public void setTweet_urls(List<String> tweet_urls) {
 		this.tweet_urls = tweet_urls;
-	}
-
-	public List<String> getTweet_emoticons() {
-		return tweet_emoticons;
-	}
-
-	public void setTweet_emoticons(List<String> tweet_emoticons) {
-		this.tweet_emoticons = tweet_emoticons;
 	}
 
 	public String getTweet_date() {

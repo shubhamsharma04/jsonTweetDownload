@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.tweetDownload.dataformat.Tweet;
+import com.tweetDownload.dataformat.User;
 
 import twitter4j.GeoLocation;
 import twitter4j.HashtagEntity;
@@ -79,7 +80,6 @@ public class CustomStatusListener implements StatusListener{
 		tweetJson.setHashtags(hashTagList);
 		tweetJson.setTweet_text(tweet.getText());
 		tweetJson.setTweet_lang(tweet.getLang());
-		tweetJson.setTopic("demonetization");
 		tweetJson.setTweet_date(String.valueOf(tweet.getCreatedAt()));
 		URLEntity[] urlEntities = tweet.getURLEntities();
 		List<String> urlList = new ArrayList<String>();
@@ -94,6 +94,14 @@ public class CustomStatusListener implements StatusListener{
 		}
 		tweetJson.setMentions(mentionList);
 
+		// Add User details
+		twitter4j.User tweetUser = tweet.getUser();
+		User user = new User();
+		user.setScreenName(tweetUser.getScreenName());
+		user.setFollowersCount(tweetUser.getFollowersCount());
+		user.setFriendsCount(tweetUser.getFriendsCount());
+		user.setLocation(tweetUser.getLocation());
+		tweetJson.setUser(user);
 		try {
 			FileUtils.write(tweetFile, tweetJson.getAsJson(tweetJson) + "\n", StandardCharsets.UTF_8, true);
 		} catch (IOException e) {
