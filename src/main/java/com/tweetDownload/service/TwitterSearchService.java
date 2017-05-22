@@ -13,13 +13,13 @@ import org.springframework.stereotype.Service;
 
 import com.tweetDownload.dataformat.Tweet;
 import com.tweetDownload.dataformat.User;
+import com.tweetDownload.utils.GeneralConstants;
 
 import twitter4j.GeoLocation;
 import twitter4j.HashtagEntity;
 import twitter4j.Paging;
 import twitter4j.Status;
 import twitter4j.Twitter;
-import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 import twitter4j.URLEntity;
 import twitter4j.UserMentionEntity;
@@ -45,7 +45,7 @@ public class TwitterSearchService {
 
 	@Value("${tweet.user.screenName}")
 	private String screenName;
-
+	
 	final static Logger logger = Logger.getLogger(TwitterSearchService.class);
 
 	public void stalkAUser() {
@@ -54,29 +54,37 @@ public class TwitterSearchService {
 				.setOAuthAccessToken(oAuthAccessToken).setOAuthAccessTokenSecret(oAuthAccessTokenSecret);
 		cb.setJSONStoreEnabled(true);
 		Twitter twitter = new TwitterFactory(cb.build()).getInstance();
-		int pageno = 1;
-		int maxTweets = 3200;
 		int globalCount = 0;
 		List<Status> statuses = new ArrayList<Status>();
-		while (globalCount <= maxTweets) {
+		boolean doBreak = false;
+		int pageno = 1;
+		while (globalCount <= GeneralConstants.maxTweets) {
+			if(statuses.size()>=2400){
+				break;
+			}
 			while (true) {
 				try {
 					Paging page = new Paging(pageno++, 200);
 					statuses.addAll(twitter.getUserTimeline(screenName, page));
 					globalCount = statuses.size();
-					if (statuses.size() >= maxTweets){
+					if (statuses.size() >= GeneralConstants.maxTweets) {
 						break;
 					}
-				} catch (TwitterException e) {
+				} catch (Exception e) {
 					logger.error("", e);
+					doBreak = true;
+					break;
 				}
+
+			}
+			if(doBreak){
+				break;
 			}
 		}
 		
 		for(Status tweet : statuses){
 
 			File tweetFile = new File(outputFileDirectory+screenName);
-			// String tweetAsJson = TwitterObjectFactory.getRawJSON(status);
 			Tweet tweetJson = new Tweet();
 			if (tweet.isRetweet()) {
 				tweetJson.setRetweet(true);
