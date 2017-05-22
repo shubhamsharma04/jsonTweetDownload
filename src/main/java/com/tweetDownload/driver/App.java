@@ -1,10 +1,12 @@
 package com.tweetDownload.driver;
 
+import java.io.IOException;
+
 import org.apache.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import com.tweetDownload.service.TwitterStreamingService;
+import com.tweetDownload.service.TweetCleanService;
 
 public class App {
 	 
@@ -12,8 +14,11 @@ public class App {
 
 	public static void main(String[] args) {
 		ApplicationContext context = new ClassPathXmlApplicationContext("Spring.xml");
-		TwitterStreamingService twitterStreamingService = (TwitterStreamingService) context
-				.getBean("twitterStreamingService");
-		twitterStreamingService.twitterStreamingService();
+		TweetCleanService cleanService = (TweetCleanService) context.getBean("tweetCleanService");
+		try {
+			cleanService.formatTweets();
+		} catch (IOException e) {
+			logger.error("",e);
+		}
 	}
 }
