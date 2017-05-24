@@ -59,9 +59,6 @@ public class TwitterSearchService {
 		boolean doBreak = false;
 		int pageno = 1;
 		while (globalCount <= GeneralConstants.maxTweets) {
-			if(statuses.size()>=2400){
-				break;
-			}
 			while (true) {
 				try {
 					Paging page = new Paging(pageno++, 200);
@@ -81,10 +78,8 @@ public class TwitterSearchService {
 				break;
 			}
 		}
-		
+		File tweetFile = new File(outputFileDirectory+screenName);
 		for(Status tweet : statuses){
-
-			File tweetFile = new File(outputFileDirectory+screenName);
 			Tweet tweetJson = new Tweet();
 			if (tweet.isRetweet()) {
 				tweetJson.setRetweet(true);
