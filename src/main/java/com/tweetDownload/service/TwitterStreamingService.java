@@ -40,7 +40,7 @@ public class TwitterStreamingService {
 
 	final static Logger logger = Logger.getLogger(TwitterStreamingService.class);
 
-	public void twitterStreamingService() {
+	public void streamTweets() {
 
 		ConfigurationBuilder cb = new ConfigurationBuilder();
 		cb.setOAuthConsumerKey(oAuthConsumerKey).setOAuthConsumerSecret(oAuthConsumerSecret)

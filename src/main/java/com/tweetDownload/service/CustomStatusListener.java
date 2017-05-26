@@ -2,8 +2,11 @@ package com.tweetDownload.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -13,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import com.tweetDownload.dataformat.Tweet;
 import com.tweetDownload.dataformat.User;
+import com.tweetDownload.utils.GeneralConstants;
 
 import twitter4j.GeoLocation;
 import twitter4j.HashtagEntity;
@@ -24,11 +28,13 @@ import twitter4j.URLEntity;
 import twitter4j.UserMentionEntity;
 
 @Service
-public class CustomStatusListener implements StatusListener{
-	
+public class CustomStatusListener implements StatusListener {
+
 	@Value("${tweet.output.file.location}")
 	private String outputFileLocation;
-	
+
+	private static List<Tweet> bufferedTweets = new ArrayList<Tweet>();
+
 	final static Logger logger = Logger.getLogger(CustomStatusListener.class);
 
 	public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {
@@ -55,59 +61,105 @@ public class CustomStatusListener implements StatusListener{
 		logger.info("Inside onStallWarning");
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see twitter4j.StatusListener#onStatus(twitter4j.Status) Takes the heavy
+	 * status object, parses some relevant information from it and stores it in
+	 * a local file
+	 */
 	@Override
 	public void onStatus(Status tweet) {
-		File tweetFile = new File(outputFileLocation);
+		// If you don't mind storing the entire tweet json, uncomment the
+		// following line and write it to the file
 		// String tweetAsJson = TwitterObjectFactory.getRawJSON(status);
-		Tweet tweetJson = new Tweet();
+		Tweet miniTweet = new Tweet();
 		if (tweet.isRetweet()) {
-			tweetJson.setRetweet(true);
+			miniTweet.setRetweet(true);
 		}
 
+		miniTweet.setId(tweet.getId());
+		miniTweet.setTweet_text(tweet.getText());
+		miniTweet.setTweet_lang(tweet.getLang());
+		miniTweet.setTweet_date(String.valueOf(tweet.getCreatedAt()));
+
+		setGeoLocation(miniTweet, tweet);
+
+		HashtagEntity[] hashTagEntities = tweet.getHashtagEntities();
+		setEntityCollection(miniTweet, Arrays.asList(hashTagEntities));
+
+		URLEntity[] urlEntities = tweet.getURLEntities();
+		setEntityCollection(miniTweet, Arrays.asList(urlEntities));
+
+		UserMentionEntity[] userMentionEntities = tweet.getUserMentionEntities();
+		setEntityCollection(miniTweet, Arrays.asList(userMentionEntities));
+
+		// Add User details
+		setUser(miniTweet, tweet);
+		bufferOrStoreTweet(miniTweet);
+	}
+
+	private void setGeoLocation(Tweet miniTweet, Status tweet) {
 		GeoLocation geoLocation = tweet.getGeoLocation();
 		if (geoLocation != null) {
 			double[] locations = new double[2];
 			locations[1] = geoLocation.getLongitude();
 			locations[0] = geoLocation.getLatitude();
-			tweetJson.setTweet_loc(locations);
+			miniTweet.setTweet_loc(locations);
 		}
-		HashtagEntity[] hashTagEntities = tweet.getHashtagEntities();
-		List<String> hashTagList = new ArrayList<String>();
-		for (HashtagEntity hashTagEntity : hashTagEntities) {
-			hashTagList.add(hashTagEntity.getText());
-		}
-		
-		tweetJson.setHashtags(hashTagList);
-		tweetJson.setTweet_text(tweet.getText());
-		tweetJson.setTweet_lang(tweet.getLang());
-		tweetJson.setTweet_date(String.valueOf(tweet.getCreatedAt()));
-		URLEntity[] urlEntities = tweet.getURLEntities();
-		List<String> urlList = new ArrayList<String>();
-		for (URLEntity urlEntity : urlEntities) {
-			urlList.add(urlEntity.getText());
-		}
-		tweetJson.setTweet_urls(urlList);
-		UserMentionEntity[] userMentionEntities = tweet.getUserMentionEntities();
-		List<String> mentionList = new ArrayList<String>();
-		for (UserMentionEntity userMentionEntity : userMentionEntities) {
-			mentionList.add(userMentionEntity.getText());
-		}
-		tweetJson.setMentions(mentionList);
+	}
 
-		// Add User details
+	private void setUser(Tweet miniTweet, Status tweet) {
 		twitter4j.User tweetUser = tweet.getUser();
 		User user = new User();
 		user.setScreenName(tweetUser.getScreenName());
 		user.setFollowersCount(tweetUser.getFollowersCount());
 		user.setFriendsCount(tweetUser.getFriendsCount());
 		user.setLocation(tweetUser.getLocation());
-		tweetJson.setUser(user);
-		try {
-			FileUtils.write(tweetFile, tweetJson.getAsJson(tweetJson) + "\n", StandardCharsets.UTF_8, true);
-		} catch (IOException e) {
-			logger.error(e);
-		}
+		miniTweet.setUser(user);
+	}
 
+	private void setEntityCollection(Tweet miniTweet, List<?> entities) {
+		if (entities != null && entities.size() > 0) {
+			Object classObject = entities.get(0);
+			List<String> entityList = new ArrayList<String>();
+			if (HashtagEntity.class.isInstance(classObject)) {
+				for (Object entity : entities) {
+					entityList.add(((HashtagEntity) entity).getText());
+				}
+				miniTweet.setHashtags(entityList);
+			} else if (URLEntity.class.isInstance(classObject)) {
+				for (Object entity : entities) {
+					entityList.add(((URLEntity) entity).getText());
+				}
+				miniTweet.setTweet_urls(entityList);
+			} else if (UserMentionEntity.class.isInstance(classObject)) {
+				for (Object entity : entities) {
+					entityList.add(((UserMentionEntity) entity).getText());
+				}
+				miniTweet.setMentions(entityList);
+			} else {
+				logger.warn("Object : " + classObject.getClass() + " is incompatible with this method.");
+			}
+
+		}
+	}
+
+	private synchronized void bufferOrStoreTweet(Tweet miniTweet) {
+		bufferedTweets.add(miniTweet);
+		if (bufferedTweets.size() >= GeneralConstants.BUFFERED_TWEET_SIZE) {
+			File tweetFile = new File(outputFileLocation);
+			try {
+				List<String> outputTweets = new ArrayList<String>();
+				for(Tweet tweet : bufferedTweets){
+					outputTweets.add(tweet.getAsJson(tweet));
+				}
+				FileUtils.writeLines(tweetFile, "UTF-8", (Collection<String>) outputTweets, "\n", true);
+			} catch (IOException e) {
+				logger.error(e);
+			}
+			bufferedTweets = new ArrayList<Tweet>();
+		}
 	}
 
 }

@@ -58,13 +58,13 @@ public class TwitterSearchService {
 		List<Status> statuses = new ArrayList<Status>();
 		boolean doBreak = false;
 		int pageno = 1;
-		while (globalCount <= GeneralConstants.maxTweets) {
+		while (globalCount <= GeneralConstants.MAX_NUM_TWEETS) {
 			while (true) {
 				try {
 					Paging page = new Paging(pageno++, 200);
 					statuses.addAll(twitter.getUserTimeline(screenName, page));
 					globalCount = statuses.size();
-					if (statuses.size() >= GeneralConstants.maxTweets) {
+					if (statuses.size() >= GeneralConstants.MAX_NUM_TWEETS) {
 						break;
 					}
 				} catch (Exception e) {
