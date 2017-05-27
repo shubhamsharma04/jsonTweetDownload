@@ -8,6 +8,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Tweet {
+	
+	@JsonProperty("id")
+	private long id;
 
 	@JsonProperty("tweet_text")
 	private String tweet_text;
@@ -29,12 +32,20 @@ public class Tweet {
 
 	@JsonProperty("tweet_loc")
 	private double[] tweet_loc;
-	
+
 	@JsonProperty("isRetweet")
 	private boolean isRetweet;
-	
+
 	@JsonProperty("user")
 	private User user;
+	
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
 
 	public User getUser() {
 		return user;
@@ -67,7 +78,6 @@ public class Tweet {
 	public void setTweet_lang(String tweet_lang) {
 		this.tweet_lang = tweet_lang;
 	}
-
 
 	public List<String> getHashtags() {
 		return hashtags;
