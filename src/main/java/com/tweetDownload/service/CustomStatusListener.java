@@ -32,6 +32,9 @@ public class CustomStatusListener implements StatusListener {
 
 	@Value("${tweet.output.file.location}")
 	private String outputFileLocation;
+	
+	@Value("${tweet.buffer.size}")
+	private int bufferedTweetSize;
 
 	private static List<Tweet> bufferedTweets = new ArrayList<Tweet>();
 
@@ -147,9 +150,10 @@ public class CustomStatusListener implements StatusListener {
 
 	private synchronized void bufferOrStoreTweet(Tweet miniTweet) {
 		bufferedTweets.add(miniTweet);
-		if (bufferedTweets.size() >= GeneralConstants.BUFFERED_TWEET_SIZE) {
+		if (bufferedTweets.size() >= bufferedTweetSize) {
 			File tweetFile = new File(outputFileLocation);
 			try {
+				logger.info("About to persist : "+bufferedTweetSize+" tweets");
 				List<String> outputTweets = new ArrayList<String>();
 				for(Tweet tweet : bufferedTweets){
 					outputTweets.add(tweet.getAsJson(tweet));
